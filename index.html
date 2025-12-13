@@ -1,0 +1,185 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+  <meta charset="UTF-8" />
+  <title>Sondage Communication OFPPT</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <!-- Police moderne -->
+  <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;600&display=swap" rel="stylesheet">
+  <style>
+    :root {
+      --primary: #1565c0;
+      --primary-strong: #1e88e5;
+      --neutral: #2196F3;
+      --success: #2e7d32;
+      --error: #c62828;
+    }
+    body {
+      font-family: "Poppins", sans-serif;
+      background: url("OFPPT.jpeg") no-repeat center center fixed;
+      background-size: 1200px;
+      margin: 0;
+      padding: 0;
+      text-align: center;
+      color: #222;
+    }
+    header img {
+      width: 120px;
+      margin: 20px auto;
+      display: block;
+    }
+    .container {
+      max-width: 640px;
+      margin: 0 auto 32px;
+      background: rgba(255, 255, 255, 0.92); /* overlay translucide */
+      padding: 28px;
+      border-radius: 16px;
+      box-shadow: 0 8px 24px rgba(0,0,0,0.25);
+      opacity: 0;
+      transition: opacity 0.6s ease;
+    }
+    .container.show { opacity: 1; }
+    h1 {
+      color: var(--primary);
+      margin-top: 0;
+      margin-bottom: 8px;
+      font-weight: 700;
+    }
+    p.subtitle { color: #444; margin-top: 0; }
+    @keyframes pulse { 0% { transform: scale(1);} 50% { transform: scale(1.03);} 100% { transform: scale(1);} }
+    .choices { display: grid; gap: 12px; margin-top: 16px; }
+    .choice-button {
+      display: flex; align-items: center; justify-content: center; gap: 10px;
+      width: 100%; padding: 14px 18px; font-size: 17px; border: none;
+      border-radius: 12px; cursor: pointer; color: #fff;
+      background: linear-gradient(135deg, #42a5f5, #1e88e5);
+      transition: all 0.3s ease;
+    }
+    .choice-button:hover {
+      transform: scale(1.05);
+      box-shadow: 0 12px 20px rgba(0,0,0,0.2);
+    }
+    input, textarea {
+      width: 100%; padding: 12px 14px; margin: 8px 0 14px;
+      border: 1px solid #d0d7de; border-radius: 10px; font-size: 16px;
+    }
+    textarea { min-height: 120px; resize: vertical; }
+    .submit {
+      background: linear-gradient(135deg, var(--primary), var(--primary-strong));
+      color: white; padding: 12px 22px;
+      border: none; border-radius: 10px; font-size: 16px; cursor: pointer;
+      transition: all 0.3s ease;
+    }
+    .submit:hover { transform: scale(1.05); }
+    .status { margin-top: 10px; font-size: 14px; min-height: 20px; }
+    .status.success { color: var(--success); }
+    .status.error { color: var(--error); }
+    #page3 h1 { animation: pulse 2.2s infinite; }
+    .note { font-size: 13px; color: #666; margin-top: 8px; }
+  </style>
+</head>
+<body>
+
+  <!-- Logo -->
+  <header>
+    <img src="Pie.jpeg" alt="Logo OFPPT" />
+  </header>
+
+  <!-- Page 1 -->
+  <div class="container show" id="page1">
+    <h1>Sondage sur la communication à l’OFPPT</h1>
+    <p class="subtitle">Ce sondage a pour but de recueillir vos avis sur la communication entre l’administration, les formateurs et les stagiaires.</p>
+    <p>Est-ce que vous trouvez que la communication est un problème ?</p>
+    <div class="choices">
+      <button class="choice-button" onclick="selectAnswer('Oui')">✅ Oui</button>
+      <button class="choice-button" onclick="selectAnswer('Non')">❌ Non</button>
+      <button class="choice-button" onclick="selectAnswer('Pas un problème pour moi')">🤷 Pas un problème pour moi</button>
+    </div>
+    <p class="note">Après votre choix, vous pourrez écrire votre nom et votre avis.</p>
+  </div>
+
+  <!-- Page 2 -->
+  <div class="container" id="page2">
+    <h1>Votre avis</h1>
+    <p class="subtitle">Merci de préciser votre nom et partager votre idée ou solution.</p>
+    <form id="formAvis" onsubmit="sendToFormspree(event)">
+      <input type="text" id="nom" name="nom" placeholder="Votre nom" required />
+      <textarea id="avis" name="avis" placeholder="Votre solution ou idée" required></textarea>
+      <input type="hidden" id="reponse" name="reponse" />
+      <input type="hidden" name="_subject" value="Nouvelle réponse - Sondage OFPPT" />
+      <input type="text" name="_gotcha" style="display:none" />
+      <button class="submit" id="submitBtn" type="submit">Envoyer</button>
+      <div class="status" id="status"></div>
+    </form>
+  </div>
+
+  <!-- Page 3 -->
+  <div class="container" id="page3">
+    <h1>Merci 🙏</h1>
+    <p>Merci pour votre participation. Vos idées sont précieuses pour améliorer la communication dans notre établissement.</p>
+    <p class="note">Vous pouvez fermer la page. Votre réponse a été enregistrée.</p>
+  </div>
+
+<script>
+  let reponseChoisie = "";
+  function selectAnswer(rep) {
+    reponseChoisie = rep;
+    showPage("page2");
+    document.getElementById("reponse").value = reponseChoisie;
+    setTimeout(() => document.getElementById("nom").focus(), 100);
+  }
+
+  function showPage(id) {
+    document.querySelectorAll(".container").forEach(c => c.classList.remove("show"));
+    document.getElementById(id).classList.add("show");
+  }
+
+  const FORMSPREE_ENDPOINT = "https://formspree.io/f/xblnwbel";
+
+  async function sendToFormspree(e) {
+    e.preventDefault();
+    const statusEl = document.getElementById("status");
+    const btn = document.getElementById("submitBtn");
+    const nom = document.getElementById("nom").value.trim();
+    const avis = document.getElementById("avis").value.trim();
+    const reponse = document.getElementById("reponse").value || "Non précisé";
+
+    if (!nom || !avis) {
+      statusEl.textContent = "Veuillez remplir votre nom et votre avis.";
+      statusEl.className = "status error";
+      return;
+    }
+
+    btn.disabled = true;
+    statusEl.textContent = "Envoi en cours…";
+    statusEl.className = "status";
+
+    try {
+      const fd = new FormData();
+      fd.append("nom", nom);
+      fd.append("avis", avis);
+      fd.append("reponse", reponse);
+      fd.append("_subject", "Nouvelle réponse - Sondage OFPPT");
+
+      const res = await fetch(FORMSPREE_ENDPOINT, {
+        method: "POST",
+        headers: { "Accept": "application/json" },
+        body: fd
+      });
+
+      const data = await res.json().catch(() => ({}));
+      if (res.ok) {
+        showPage("page3");
+      } else {
+        throw new Error((data.errors && data.errors[0] && data.errors[0].message) || "Échec de l’envoi");
+      }
+    } catch (err) {
+      statusEl.textContent = "Une erreur est survenue. Réessayez.";
+      statusEl.className = "status error";
+      btn.disabled = false;
+    }
+  }
+</script>
+</body>
+</html>
+
